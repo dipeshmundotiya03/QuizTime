@@ -56,11 +56,11 @@ fun NavGraph(
             )
         }
         composable<Route.QuizScreen> {
-           val topicCode = it.toRoute<Route.QuizScreen>().topicCode
             val viewModel = koinViewModel<QuizQuestionViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
             QuizScreen(
                 state = state,
+                event = viewModel.event,
                 onAction = viewModel::onAction,
                     navigateToDashboard = {
                         navController.navigateUp()

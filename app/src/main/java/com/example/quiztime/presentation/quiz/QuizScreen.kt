@@ -1,5 +1,6 @@
 package com.example.quiztime.presentation.quiz
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.quiztime.domain.model.QuizQuestion
 import com.example.quiztime.domain.model.UserAnswer
@@ -40,31 +42,49 @@ import com.example.quiztime.presentation.quiz.component.QuizScreenTopBar
 import com.example.quiztime.presentation.quiz.component.QuizState
 import com.example.quiztime.presentation.quiz.component.QuizSubmitButtons
 import com.example.quiztime.presentation.quiz.component.SubmitQuizDialog
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun QuizScreen(
     state : QuizState,
+    event : Flow<QuizEvent>,
     navigateToDashboard : () -> Unit,
     navigateToResult : () -> Unit,
     onAction: (QuizAction) -> Unit
 ){
+val context = LocalContext.current
+
+    LaunchedEffect(key1 = Unit ) {
+        event.collect{event->
+            when(event){
+                is QuizEvent.ShowToast ->{
+                    Toast.makeText(context,event.message,Toast.LENGTH_LONG).show()
+                }
+
+                QuizEvent.NavigateToDashboardScreen -> navigateToDashboard()
+                QuizEvent.NavigateToResultScreen -> navigateToResult()
+            }
+        }
+    }
+
+
     SubmitQuizDialog(
         isOpen = state.isSubmitQuizDialogOpen,
-        onConfirmButton = {},
-        onDialogDismiss = {}
+        onConfirmButton = {onAction(QuizAction.SubmitQuizConfirmButtonClick)},
+        onDialogDismiss = {onAction(QuizAction.SubmitQuizDialogDismiss)}
     )
 
     ExitQuizDialog(
         isOpen = state.isExitQuizDialogOpen,
-        onConfirmButton = {},
-        onDialogDismiss = {}
+        onConfirmButton = {onAction(QuizAction.ExitQuizConfirmButtonClick)},
+        onDialogDismiss = {onAction(QuizAction.ExitQuizDialogDismiss)}
     )
 
 
     Column (modifier = Modifier.fillMaxSize()){
         QuizScreenTopBar(
             title = state.topBarTitle,
-            onExitClick = navigateToDashboard
+            onExitClick = { onAction(QuizAction.ExitQuizButtonClick) }
         )
         if (state.isLoading){
             QuizScreenLoadingContent(
@@ -77,20 +97,21 @@ fun QuizScreen(
                     ErrorScreen(
                         modifier = Modifier.fillMaxSize(),
                         errorMessage = state.errorMessage,
-                        onRefreshClick = {}
+                        onRefreshClick = {onAction(QuizAction.Refresh)}
                     )
                 }
                 state.questions.isEmpty() -> {
                     ErrorScreen(
                         modifier = Modifier.fillMaxSize(),
                         errorMessage = "No Quiz Question Available",
-                        onRefreshClick = {}
+                        onRefreshClick = {onAction(QuizAction.Refresh)}
                     )
                 }
                 else ->{
-                    QuizScreenContent(state = state,
-                        onAction = onAction,
-                        onSubmitClick =navigateToResult )
+                    QuizScreenContent(
+                        state = state,
+                        onAction = onAction
+                         )
                 }
 
             }
@@ -104,8 +125,7 @@ fun QuizScreen(
 private fun QuizScreenContent(
     modifier: Modifier = Modifier,
     state: QuizState,
-    onAction: (QuizAction) -> Unit,
-    onSubmitClick : () -> Unit
+    onAction: (QuizAction) -> Unit
 ){
 
     val pagerState = rememberPagerState (
@@ -159,7 +179,7 @@ private fun QuizScreenContent(
             isNextButtonEnabled = state.currentQuestionIndex != state.questions.lastIndex,
             onPreviousButtonClick = {onAction(QuizAction.PrevQuestionButtonClick) },
             onNextButtonClick = {onAction(QuizAction.NextQuestionButtonClick) },
-            onSubmitButtonClick = onSubmitClick
+            onSubmitButtonClick = {onAction(QuizAction.SubmitQuizButtonClick)}
         )
     }
 }
