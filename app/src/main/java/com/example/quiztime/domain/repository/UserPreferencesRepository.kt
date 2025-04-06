@@ -8,5 +8,9 @@ interface UserPreferencesRepository {
 
     fun getCorrectAnswers(): Flow<Int>
 
+    fun getUserName(): Flow<String>
+
     suspend fun saveScore(questionsAttempted: Int, correctAnswers: Int)
+
+    suspend fun saveUserName(name : String)
 }

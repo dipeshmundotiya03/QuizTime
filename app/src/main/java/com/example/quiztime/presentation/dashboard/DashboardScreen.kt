@@ -38,15 +38,16 @@ import com.example.quiztime.presentation.dashboard.component.UserStaticsCard
 @Composable
 fun DashboardScreen(
     state: DashboardState,
+    onAction:( DashboardAction)-> Unit,
     onTopicCardClick: (Int) -> Unit
 ) {
     NameEditDialog(
         isOpen = state.isNameEditDialogOpen,
         textFieldValue = state.usernameTextFieldValue,
         usernameError = state.usernameError,
-        onDialogDismiss = {},
-        onConfirmButton = {},
-        onTextFieldValueChange = {}
+        onDialogDismiss = {onAction(DashboardAction.NameEditDialogDismiss)},
+        onConfirmButton = {onAction(DashboardAction.NameEditDialogConfirm)},
+        onTextFieldValueChange = {onAction(DashboardAction.SetUserName(it))}
     )
 
 
@@ -61,14 +62,14 @@ fun DashboardScreen(
             username = state.username,
             questionsAttempted = state.questionAttempted,
             correctAnswers = state.correctAnswers,
-            onEditNameClick = {}
+            onEditNameClick = {onAction(DashboardAction.NameEditIconClick)}
         )
         QuizTopicSection(
             modifier = Modifier.fillMaxWidth(),
             quizTopics = state.quizTopics,
             isTopicLoading = state.isLoading,
             errorMessage = state.errorMessage,
-            onRefreshClick = {},
+            onRefreshClick = {onAction(DashboardAction.RefreshIconClick)},
             onTopicCardClick = onTopicCardClick
         )
     }
@@ -118,7 +119,7 @@ private fun HeaderSection(
         UserStaticsCard(
             modifier = Modifier
                 .widthIn(max = 400.dp)
-                .padding(10.dp),
+                .padding(20.dp),
             questionsAttempted =questionsAttempted,
             correctAnswers = correctAnswers
         )
@@ -192,5 +193,6 @@ private fun QuizTopicSection(
 @Composable
 private fun PreviewDashboardScreen(){
     DashboardScreen(state = DashboardState(),
+        onAction = {},
         onTopicCardClick = {})
 }

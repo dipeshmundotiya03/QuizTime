@@ -14,4 +14,6 @@ object Constant {
     const val QUESTIONS_ATTEMPTED_PREF_KEY ="questions_attempted"
     const val CORRECT_ANSWERS_PREF_KEY ="correct_answers"
 
+    const val USERNAME_PREF_KEY = "username"
+
 }

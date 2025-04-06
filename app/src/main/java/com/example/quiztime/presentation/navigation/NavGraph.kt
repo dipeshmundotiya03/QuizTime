@@ -35,6 +35,7 @@ fun NavGraph(
             val state by viewmodel.state.collectAsStateWithLifecycle()
             DashboardScreen(
                 state = state,
+                onAction = viewmodel::onAction,
                 onTopicCardClick = {topicCode ->
                     navController.navigate(Route.QuizScreen(topicCode))
                 }

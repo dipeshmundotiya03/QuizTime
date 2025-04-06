@@ -23,11 +23,13 @@ class DashboardViewModel(
     val state = combine(
         _state,
         userPreferencesRepository.getQuestionsAttempted(),
-        userPreferencesRepository.getCorrectAnswers()
-    ){state, questionsAttempted,correctAnswers->
+        userPreferencesRepository.getCorrectAnswers(),
+        userPreferencesRepository.getUserName()
+    ){state, questionsAttempted,correctAnswers,username->
         state.copy(
         questionAttempted = questionsAttempted,
-        correctAnswers = correctAnswers )
+        correctAnswers = correctAnswers,
+            username = username)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
@@ -37,6 +39,34 @@ class DashboardViewModel(
 
     init {
         getQuizTopics()
+    }
+
+    fun onAction(action: DashboardAction){
+        when (action){
+            DashboardAction.NameEditDialogConfirm -> {
+                _state.update { it.copy(isNameEditDialogOpen = false) }
+                saveUsername(state.value.usernameTextFieldValue)
+            }
+            DashboardAction.NameEditDialogDismiss -> {
+                _state.update { it.copy(isNameEditDialogOpen = false) }
+            }
+            DashboardAction.NameEditIconClick -> {
+                _state.update { it.copy(
+                    usernameTextFieldValue = state.value.username,
+                    isNameEditDialogOpen = true) }
+            }
+
+            is DashboardAction.SetUserName -> {
+                val usernameError = validateUserName(action.username)
+                _state.update {
+                    it.copy(usernameTextFieldValue = action.username,
+                        usernameError = usernameError) }
+            }
+
+            DashboardAction.RefreshIconClick -> {
+                getQuizTopics()
+            }
+        }
     }
 
     private fun getQuizTopics(){
@@ -59,6 +89,23 @@ class DashboardViewModel(
                             isLoading = false
                         ) }
                 }
+        }
+    }
+
+    private fun saveUsername (username : String){
+        viewModelScope.launch {
+            val trimmedUsername = username.trim()
+            userPreferencesRepository.saveUserName(trimmedUsername)
+        }
+    }
+
+    private fun validateUserName(userName :String): String?{
+        return when{
+            userName.isBlank() -> "Username cannot be empty"
+            userName.length < 3 -> "Name is too short"
+            userName.length > 20 -> "Name is too long"
+            else -> null
+
         }
     }
 }
