@@ -26,6 +26,7 @@ class QuizQuestionRepositoryImpl(
         return when (val result = remoteDataSource.getQuizQuestions(topicCode)) {
             is Result.Success -> {
                 val questionDto = result.data
+                answerDao.clearAllUserAnswers()
                 questionDao.clearAllQuizQuestions()
                 questionDao.insertQuizQuestions(questionDto.toQuizQuestionsEntity())
                 Result.Success(questionDto.toQuizQuestions())
