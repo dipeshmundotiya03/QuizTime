@@ -1,6 +1,7 @@
 package com.example.quiztime.data.remote
 
 import com.example.domain.util.DataError
+import com.example.quiztime.data.remote.dto.IssueReportDto
 import com.example.quiztime.data.remote.dto.QuizQuestionDto
 import com.example.quiztime.data.remote.dto.QuizTopicDto
 import com.example.quiztime.data.util.Constant.BASE_URL
@@ -8,6 +9,8 @@ import domain.util.Result
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 
 
 class KtorRemoteQuizDataSource(
@@ -27,6 +30,16 @@ class KtorRemoteQuizDataSource(
             httpClient.get(urlString = "$BASE_URL/quiz/question/random"){
                 parameter("topicCode",topicCode)
             }
+        }
+    }
+
+    override suspend fun insertIssueReport(issueReport: IssueReportDto): Result<Unit, DataError> {
+        return safeCall<Unit> {
+            httpClient.post(urlString = "$BASE_URL/report/issues" ){
+                setBody(issueReport)
+
+            }
+
         }
     }
 }

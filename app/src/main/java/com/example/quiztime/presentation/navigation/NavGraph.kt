@@ -6,22 +6,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
-import com.example.quiztime.domain.model.QuizQuestion
 import com.example.quiztime.presentation.dashboard.DashboardScreen
 import com.example.quiztime.presentation.dashboard.DashboardViewModel
 import com.example.quiztime.presentation.issue_report.IssueReportScreen
-import com.example.quiztime.presentation.issue_report.IssueReportState
+import com.example.quiztime.presentation.issue_report.IssueReportViewModel
 import com.example.quiztime.presentation.quiz.QuizQuestionViewModel
 import com.example.quiztime.presentation.quiz.QuizScreen
-import com.example.quiztime.presentation.quiz.component.QuizState
 import com.example.quiztime.presentation.result.ResultScreen
-import com.example.quiztime.presentation.result.ResultState
+import com.example.quiztime.presentation.result.ResultViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -34,16 +29,6 @@ fun NavGraph(
         navController = navController,
         startDestination = Route.DashboardScreen
     ){
-        val dummyQuestions = List(size = 10){index->
-            QuizQuestion(
-                id = "$index",
-                topicCode = 1,
-                question = "What is the language for android Dev?",
-                allOptions = listOf("Java","Kotlin","C++","Python"),
-                correctAnswer = "Kotlin",
-                explanation = "Kotlin is a programming language"
-            )
-        }
 
         composable<Route.DashboardScreen> {
            val viewmodel = koinViewModel<DashboardViewModel>()
@@ -76,8 +61,11 @@ fun NavGraph(
 
         }
         composable<Route.ResultScreen> {
+            val viewModel = koinViewModel<ResultViewModel>()
+            val state by viewModel.state.collectAsStateWithLifecycle()
             ResultScreen(
-                state = ResultState(quizQuestions = dummyQuestions),
+              state = state,
+                event = viewModel.event,
                 onReportClick = {questionId->
                     navController.navigate(Route.IssueReportScreen(questionId))
                 },
@@ -91,11 +79,14 @@ fun NavGraph(
             )
         }
         composable<Route.IssueReportScreen> {
+            val viewModel = koinViewModel<IssueReportViewModel>()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
             IssueReportScreen(
-                state = IssueReportState(
-                    quizQuestion = dummyQuestions[0]
-                ),
-                onBackButtonClick = {
+                state = state,
+                event = viewModel.event,
+                onAction = viewModel::onAction,
+                navigateBack = {
                     navController.navigateUp()
                 }
             )

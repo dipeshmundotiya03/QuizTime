@@ -1,5 +1,6 @@
 package com.example.quiztime.presentation.issue_report
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -19,23 +20,44 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.quiztime.presentation.issue_report.component.IssueReportScreenTopBar
 import com.example.quiztime.presentation.issue_report.component.QuestionCard
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun IssueReportScreen(
     state: IssueReportState,
-    onBackButtonClick : () -> Unit
+    event : Flow<IssueReportEvent>,
+    onAction : (IssueReportAction) -> Unit,
+    navigateBack : () -> Unit
 ){
+val context = LocalContext.current
+
+    LaunchedEffect(key1 = Unit) {
+        event.collect{event->
+            when(event){
+                is IssueReportEvent.ShowToast ->{
+                    Toast.makeText(context,event.message,Toast.LENGTH_LONG).show()
+                }
+
+                IssueReportEvent.NavigateUp -> {
+                    navigateBack()
+                }
+            }
+        }
+    }
+
     Column (
         modifier = Modifier.fillMaxSize()
     ){
         IssueReportScreenTopBar(
             title = "Report Issue",
-            onBackClick = onBackButtonClick
+            onBackClick = navigateBack
         )
         Column(
             modifier = Modifier
@@ -49,14 +71,14 @@ fun IssueReportScreen(
                 modifier = Modifier.fillMaxWidth(),
                 question = state.quizQuestion,
                 isCardExpanded = state.isQuestionCardExpanded,
-                onExpandClick = {}
+                onExpandClick = {onAction(IssueReportAction.ExpandQuestionCard)}
             )
             Spacer(modifier = Modifier.height(10.dp))
             IssueTypeSection(
                 selectedIssueType = state.issueType,
                 otherIssueText = state.otherIssueText,
-                onOtherIssueTextChange = {},
-                onIssueTypeClick = {}
+                onOtherIssueTextChange = {onAction(IssueReportAction.SetOtherIssueText(it))},
+                onIssueTypeClick = {onAction(IssueReportAction.SetIssueReportType(it))}
             )
             Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
@@ -64,7 +86,7 @@ fun IssueReportScreen(
                     .fillMaxWidth()
                     .height(200.dp),
                 value = state.additionComments,
-                onValueChange = {},
+                onValueChange = {onAction(IssueReportAction.SetAdditionComment(it))},
                 label = { Text(text = "Additional Comments") },
                 supportingText = {
                     Text(text = "Describe the issue in more detail (Optional)")
@@ -74,7 +96,7 @@ fun IssueReportScreen(
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = state.emailForFollowUp,
-                onValueChange = {},
+                onValueChange = {onAction(IssueReportAction.SetEmailForFollowUp(it))},
                 label = { Text(text = "Email for Follow Up") },
                 singleLine = true,
                 supportingText = {
@@ -86,7 +108,7 @@ fun IssueReportScreen(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(10.dp),
-            onClick = {}
+            onClick = {onAction(IssueReportAction.SubmitReport)}
         ) {
             Text( modifier = Modifier
                 .padding(horizontal = 10.dp),

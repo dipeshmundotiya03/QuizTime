@@ -22,7 +22,8 @@ import kotlinx.coroutines.launch
 class QuizQuestionViewModel(
     private val repository : QuizQuestionRepository,
     savedStateHandle: SavedStateHandle,
-    private val topicRepository: QuizTopicRepository
+    private val topicRepository: QuizTopicRepository,
+    private val questionRepository: QuizQuestionRepository
 ): ViewModel(
 
 ) {
@@ -81,7 +82,7 @@ class QuizQuestionViewModel(
              }
              QuizAction.SubmitQuizConfirmButtonClick -> {
                  _state.update { it.copy(isSubmitQuizDialogOpen = false) }
-                 _event.trySend(QuizEvent.NavigateToResultScreen)
+                 saveUserAnswers()
              }
              QuizAction.SubmitQuizButtonClick -> {
                  _state.update { it.copy(isSubmitQuizDialogOpen = true) }
@@ -112,7 +113,7 @@ class QuizQuestionViewModel(
 
     private suspend fun getQuizQuestions(topicCode : Int){
 
-           repository.getQuizQuestions(topicCode)
+           repository.fetchAndSaveQuizQuestions(topicCode)
                .onSuccess {questions ->
                    _state.update { it.copy(
                        questions = questions,
@@ -142,5 +143,21 @@ class QuizQuestionViewModel(
                 }
 
 
+    }
+
+    private fun saveUserAnswers(){
+        viewModelScope.launch {
+            _state.update {
+                it.copy(isLoading = true, loadingMessage = "Submitting Quiz ....")
+            }
+            questionRepository.saveUserAnswers(state.value.answers)
+                .onFailure { error->
+                    _event.send(QuizEvent.ShowToast(error.getErrorMessage()))
+                }
+            _state.update {
+                it.copy(isLoading = false, loadingMessage = "Submitting Quiz ....")
+            }
+            _event.send(QuizEvent.NavigateToResultScreen)
+        }
     }
 }

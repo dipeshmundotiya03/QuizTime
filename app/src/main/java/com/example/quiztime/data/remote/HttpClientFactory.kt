@@ -22,8 +22,8 @@ object HttpClientFactory {
                 json(json = Json{ ignoreUnknownKeys = true})
             }
             install(HttpTimeout){
-                socketTimeoutMillis = 10_000L
-                requestTimeoutMillis = 10_000L
+                socketTimeoutMillis = 20_000L
+                requestTimeoutMillis = 20_000L
             }
             install(Logging){
                 level = LogLevel.ALL
